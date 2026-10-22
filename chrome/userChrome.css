@@ -1,0 +1,131 @@
+/* ------------------------------------------------------------------ *
+ *  Nova UI (Firefox 157+) — классические вкладки в стиле Australis     *
+ *                                                                     *
+ *  - неактивные табы: прозрачные, без заливки-«кнопки»                 *
+ *  - активный таб: верхние углы скруглены, НИЖНИЕ загибаются наружу    *
+ *    (как язычок папки), таб прижат к низу панели вкладок             *
+ * ------------------------------------------------------------------ */
+
+:root {
+  --border-radius-medium: 4px !important;
+  --tab-border-radius: 6px !important;
+
+  /* Подсветка пунктов меню/панелей: в Nova скругление завязано на
+     --border-radius-large (16px) — слишком круглое. Уменьшаем. */
+  --panel-menuitem-border-radius: 4px !important;
+
+  /* Углы самих выпадающих панелей (меню-гамбургер, закладки, загрузки,
+     результаты адресной строки): в Nova = --border-radius-xlarge (24px).
+     Контекстные меню задают радиус отдельно и не затрагиваются. */
+  --popup-border-radius: 8px !important;
+
+  /* Радиус наружного загиба нижних углов активного таба */
+  --tab-curve: 8px;
+
+  /* Неактивные табы — прозрачные, не «кнопки» */
+  --tab-background-color: transparent !important;
+  --tab-background-color-hover: color-mix(in srgb, currentColor 11%, transparent) !important;
+
+  --tab-margin-block: 2px !important;
+
+  /* Фон активного таба = цвет панели с адресной строкой (.browser-toolbar).
+     Это полупрозрачная засветка поверх того же градиента, поэтому таб
+     сливается с тулбаром под ним и при этом светлее тёмной подложки табов. */
+  --tab-background-color-selected: var(--toolbar-background-color) !important;
+
+  /* Убираем персиковый конец градиента верхней панели: делаем оба конца
+     фиолетовыми, остаётся ровный базовый фиолетовый тон. */
+  --toolbox-background-color-gradient-trailing: var(--toolbox-background-color-gradient-leading) !important;
+
+  /* НЕПРОЗРАЧНЫЙ фон активного таба, собранный ровно как у панели с
+     адресной строкой: база + градиент тулбокса + засветка тулбара.
+     Непрозрачность нужна, чтобы затемнение #TabsToolbar под табом не
+     просвечивало, а слои точно повторяли цвет .browser-toolbar. */
+  --active-tab-bg:
+    linear-gradient(var(--toolbar-background-color), var(--toolbar-background-color)),
+    var(--toolbox-background-image, none),
+    var(--toolbox-background-color);
+}
+
+/* Затемняем подложку именно под полосой табов (titlebar), не трогая
+   панель с адресной строкой — так активный таб контрастнее на её фоне.
+   Крути --tabstrip-darken, чтобы усилить/ослабить затемнение. */
+#TabsToolbar {
+  --tabstrip-darken: light-dark(rgba(0, 0, 0, 0.07), rgba(0, 0, 0, 0.18));
+  background-color: var(--tabstrip-darken) !important;
+}
+
+/* Неактивные табы: ни рамки, ни тени — просто текст на панели */
+.tab-background:not([selected]):not([multiselected]) {
+  border-color: transparent !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Первый таб: небольшой отступ слева, чтобы его левое «ушко» не упиралось
+   в край контейнера табов и не обрезалось (у остальных табов ушки заходят
+   на соседей внутри контейнера, поэтому у них проблемы нет). */
+#tabbrowser-tabs[orient="horizontal"] .tabbrowser-tab:first-child {
+  margin-inline-start: calc(var(--tab-curve) + 1px) !important;
+}
+
+/* --- Активный таб: форма вкладки --- */
+
+/* Разрешаем «ушкам» выходить за пределы таба (в Nova стоит overflow: clip) */
+.tabbrowser-tab:is([selected], [multiselected]) {
+  overflow-clip-margin: calc(var(--tab-curve) + 2px) !important;
+  z-index: 2;
+}
+
+.tabbrowser-tab:is([selected], [multiselected]) > .tab-stack {
+  overflow: visible !important;
+}
+
+.tab-background:is([selected], [multiselected]) {
+  background: var(--active-tab-bg) !important;
+  /* Убираем 1px-бордюр Nova, иначе заливка и «ушки» не доходят до низа */
+  border-width: 0 !important;
+  border-color: transparent !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+
+  /* Скругляем только верхние углы, низ прямой */
+  border-radius: var(--tab-border-radius) var(--tab-border-radius) 0 0 !important;
+
+  /* Прижимаем таб к низу панели — он «садится» на тулбар под собой */
+  margin-block-end: 0 !important;
+
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Загиб наружу: два квадратика по бокам у нижней кромки.
+   radial-gradient-маска вырезает вогнутую четверть-окружность,
+   из-за чего основание таба плавно расширяется в стороны. */
+.tab-background:is([selected], [multiselected])::before,
+.tab-background:is([selected], [multiselected])::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: var(--tab-curve);
+  height: var(--tab-curve);
+  background: var(--active-tab-bg);
+}
+
+.tab-background:is([selected], [multiselected])::before {
+  left: calc(-1 * var(--tab-curve));
+  mask: radial-gradient(
+    circle at top left,
+    transparent var(--tab-curve),
+    #000 calc(var(--tab-curve) + 0.5px)
+  );
+}
+
+.tab-background:is([selected], [multiselected])::after {
+  right: calc(-1 * var(--tab-curve));
+  mask: radial-gradient(
+    circle at top right,
+    transparent var(--tab-curve),
+    #000 calc(var(--tab-curve) + 0.5px)
+  );
+}
