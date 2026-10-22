@@ -22,8 +22,7 @@ classic, calmer look:
 
 ## Screenshot
 
-<!-- Add a screenshot here, e.g. docs/preview.png -->
-_Add your own screenshot._
+![Firefox Better Nova — classic-style active tab](docs/better-nova.png)
 
 ---
 
